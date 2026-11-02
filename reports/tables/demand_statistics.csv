@@ -1,0 +1,25 @@
+product_id,avg_daily_demand,demand_std_dev,demand_total,demand_days,zero_demand_days,max_daily_demand,median_daily_demand,demand_cv,avg_daily_recent,avg_daily_previous,demand_change_pct,trend_slope,sku,product_name,category,unit_cost,supplier_name,demand_value,cum_share,abc_class
+1,7.056,3.545,635,90,0,19,7.0,0.502,7.821,6.536,19.67,0.003,AUTO-BRK-0012,Brake Caliper Assembly 12in,Braking,2450.0,Precision Auto Components Pvt Ltd,1555750.0,0.085,A
+2,21.122,10.383,1901,90,0,59,18.0,0.492,30.143,15.714,91.82,0.159,AUTO-BRK-0021,Brake Pad Set (Front),Braking,780.0,Precision Auto Components Pvt Ltd,1482780.0,0.166,A
+3,7.111,3.206,640,90,0,15,7.0,0.451,7.286,6.357,14.61,-0.006,AUTO-SUS-0104,Shock Absorber Rear,Suspension,1620.0,Bharat Industrial Fasteners,1036800.0,0.496,A
+4,4.311,2.416,388,90,2,11,4.0,0.56,3.679,4.321,-14.88,-0.021,AUTO-SUS-0112,Coil Spring Heavy Duty,Suspension,980.0,Bharat Industrial Fasteners,380240.0,0.953,C
+5,43.456,12.668,3911,90,0,76,42.5,0.292,40.143,42.607,-5.78,-0.109,AUTO-FLT-0201,Oil Filter Premium,Filtration,320.0,Bharat Industrial Fasteners,1251520.0,0.374,A
+6,22.178,8.054,1996,90,0,45,21.5,0.363,22.393,22.607,-0.95,0.038,AUTO-FLT-0207,Air Filter Element,Filtration,410.0,Bharat Industrial Fasteners,818360.0,0.686,A
+7,11.811,6.253,1063,90,0,32,10.0,0.529,17.393,10.214,70.28,0.135,ELEC-SEN-1001,Crankshaft Position Sensor,Electronics,1180.0,Shenzhen MotionWorks Ltd,1254340.0,0.306,A
+8,4.556,2.544,410,90,1,10,4.0,0.559,4.857,4.286,13.33,0.004,ELEC-SEN-1008,Oxygen Sensor Universal,Electronics,1650.0,Shenzhen MotionWorks Ltd,676500.0,0.8,B
+9,1.356,1.385,122,90,35,5,1.0,1.021,1.107,1.179,-6.06,-0.011,ELEC-ECU-1102,Engine Control Module v3,Electronics,9800.0,Shenzhen MotionWorks Ltd,1195600.0,0.439,A
+10,2.844,1.983,256,90,4,10,2.0,0.697,2.464,2.964,-16.87,-0.011,ELEC-HAR-1120,Wiring Harness 24V,Electronics,3400.0,NorthStar Electronics,870400.0,0.641,A
+11,3.656,2.459,329,90,5,11,3.0,0.673,3.107,4.0,-22.32,-0.013,ELEC-CAM-1130,Rear Camera Module,Electronics,2750.0,NorthStar Electronics,904750.0,0.545,A
+12,0.678,0.922,61,90,52,3,0.0,1.36,0.714,0.536,33.33,-0.002,DRV-UNT-2001,Drive Unit Assembly,Drivetrain,14500.0,EuroDrive Systems GmbH,884500.0,0.593,A
+13,4.678,2.53,421,90,0,12,4.5,0.541,4.786,4.714,1.52,-0.006,DRV-BRG-2015,Bearing Kit Heavy Duty,Drivetrain,1240.0,EuroDrive Systems GmbH,522040.0,0.86,B
+14,1.478,1.384,133,90,23,5,1.0,0.936,1.643,1.071,53.33,-0.003,DRV-CLP-2020,Clutch Plate 240mm,Drivetrain,3100.0,EuroDrive Systems GmbH,412300.0,0.91,B
+15,183.267,57.759,16494,90,0,311,199.5,0.315,179.679,188.357,-4.61,-0.077,PKG-BOX-3001,Corrugated Box 600x400,Packaging,45.0,Krishna Plastics & Packaging,742230.0,0.726,A
+16,137.522,33.202,12377,90,0,217,140.5,0.241,134.464,133.964,0.37,-0.205,PKG-BOX-3007,Corrugated Box 400x300,Packaging,32.0,Krishna Plastics & Packaging,396064.0,0.932,C
+17,18.911,8.673,1702,90,6,40,19.5,0.459,18.25,17.929,1.79,-0.05,PKG-FLM-3010,Stretch Wrap Roll,Packaging,210.0,Krishna Plastics & Packaging,357420.0,0.992,C
+18,9.933,3.877,894,90,0,19,10.0,0.39,10.143,9.464,7.17,-0.007,PKG-PLT-3020,Wooden Pallet ISPM-15,Packaging,640.0,Krishna Plastics & Packaging,572160.0,0.831,B
+19,59.667,23.504,5370,90,0,135,54.5,0.394,82.5,49.571,66.43,0.467,CON-SEAL-4001,Gasket Seal Ring,Consumables,95.0,Bharat Industrial Fasteners,510150.0,0.888,B
+20,15.889,6.316,1430,90,0,35,15.0,0.398,14.643,16.786,-12.77,-0.025,CON-GRS-4004,Lithium Grease Cartridge,Consumables,260.0,Bharat Industrial Fasteners,371800.0,0.973,C
+21,0.0,0.0,0,90,90,0,0.0,,0.0,0.0,,0.0,AUTO-CAB-0099,Cabin Air Filter (Discontinued),Filtration,290.0,Bharat Industrial Fasteners,0.0,1.0,C
+22,2.344,2.001,211,90,15,8,2.0,0.853,2.429,2.143,13.33,-0.003,ELEC-MOD-1150,Telematics Module LTE,Electronics,6200.0,Shenzhen MotionWorks Ltd,1308200.0,0.237,A
+23,0.9,1.299,81,90,54,5,0.0,1.443,1.75,1.143,53.13,0.031,ELEC-MOD-1160,Telematics Module 5G (new),Electronics,8400.0,NorthStar Electronics,680400.0,0.763,B
+24,2.967,3.876,267,90,44,17,1.0,1.306,2.929,2.821,3.8,-0.002,CON-ADH-4010,Structural Adhesive (lumpy),Consumables,520.0,Krishna Plastics & Packaging,138840.0,1.0,C

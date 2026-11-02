@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow — Project 24 · Supply Chain Optimization &amp; Inventory Forecasting</title>
+<meta name="description" content="A decision-support system that turns demand, supplier and stock data into reorder points, risk flags and forecasts.">
+<style>
+@font-face{font-family:"Fraunces";font-style:normal;font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,__FONT_FRAUNCES__) format("woff2")}
+@font-face{font-family:"Fraunces";font-style:italic;font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,__FONT_FRAUNCES_I__) format("woff2")}
+@font-face{font-family:"Inter Tight";font-style:normal;font-weight:100 900;font-display:swap;src:url(data:font/woff2;base64,__FONT_INTER__) format("woff2")}
+
+:root{
+  --paper:#f2ecde; --paper-2:#e9e0cb; --ink:#1b1712; --mute:#6c6356; --line:rgba(27,23,18,.2);
+  --sun:#ee5a22; --sun-2:#f6a23a; --night:#15110d;
+  --stockout:#c4301a; --at-risk:#d58a10; --excess:#5a6c8c; --ok:#4a7a52;
+  --serif:"Fraunces",Georgia,"Times New Roman",serif;
+  --sans:"Inter Tight",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --gut:clamp(20px,5vw,84px);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{overflow-x:clip;scroll-behavior:smooth;scroll-padding-top:70px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.6 var(--sans);overflow-x:clip}
+body::before{content:"";position:fixed;inset:0;z-index:50;pointer-events:none;opacity:.07;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+a{color:inherit}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--sun);outline-offset:3px}
+.serif{font-family:var(--serif)}
+.display{font-family:var(--serif);font-variation-settings:"SOFT" 100,"WONK" 1,"opsz" 144;font-weight:300;letter-spacing:-.03em;line-height:.92}
+.eyebrow{font:600 11px/1.7 var(--sans);letter-spacing:.22em;text-transform:uppercase;color:var(--mute)}
+.wrap{padding-inline:var(--gut);max-width:1500px;margin-inline:auto}
+section{position:relative}
+
+/* ---------- nav ---------- */
+.nav{position:fixed;z-index:40;inset:0 0 auto;height:62px;display:flex;align-items:center;justify-content:space-between;
+  padding-inline:var(--gut);background:linear-gradient(var(--paper) 40%,rgba(242,236,222,0));}
+.nav .brand{font:600 12px var(--sans);letter-spacing:.24em;text-transform:uppercase;text-decoration:none}
+.nav .brand i{font-family:var(--serif);font-style:italic;font-weight:400;letter-spacing:0;text-transform:none;font-size:18px;margin-right:2px}
+.nav ul{display:flex;gap:clamp(14px,3vw,42px);list-style:none;margin:0;padding:0}
+.nav a.l{font:500 11px var(--sans);letter-spacing:.2em;text-transform:uppercase;text-decoration:none;position:relative;padding:6px 0}
+.nav a.l::after{content:"";position:absolute;left:0;right:100%;bottom:0;height:1px;background:var(--sun);transition:right .35s}
+.nav a.l:hover::after,.nav a.l.cur::after{right:0}
+.nav a.l.cur{color:var(--sun)}
+.progress{position:fixed;z-index:60;left:0;top:0;height:2px;width:100%;background:var(--sun);transform:scaleX(var(--p,0));transform-origin:left}
+@media(max-width:820px){.nav ul{display:none}}
+
+
+/* ---------- TechText-inspired vanilla interaction ---------- */
+.hero h1.tech-title{position:relative;isolation:isolate;user-select:none;touch-action:pan-y}
+.hero h1.tech-title span{position:relative;isolation:isolate;cursor:crosshair;will-change:transform,font-weight}
+.hero h1.tech-title span::after{content:attr(data-char);position:absolute;inset:0;color:transparent;-webkit-text-stroke:1.35px var(--ink);pointer-events:none;opacity:0;transform:translateY(0) scale(1);mask-image:repeating-linear-gradient(90deg,#000 0 4px,transparent 4px 6px);-webkit-mask-image:repeating-linear-gradient(90deg,#000 0 4px,transparent 4px 6px);transition:opacity .12s ease,transform .18s ease}
+.hero h1.tech-title span.tech-active::after,.hero h1.tech-title span.tech-kicked::after{opacity:.95}
+.hero h1.tech-title span.tech-kicked{animation:tech-kick .58s cubic-bezier(.2,.8,.25,1) both}
+@keyframes tech-kick{0%{transform:translateY(0) rotate(0)}32%{transform:translateY(-24px) rotate(-3deg)}66%{transform:translateY(4px) rotate(1deg)}100%{transform:translateY(0) rotate(0)}}
+.tech-speck{position:absolute;z-index:5;width:4px;height:4px;background:var(--sun);pointer-events:none;animation:tech-speck .7s ease-out forwards}
+@keyframes tech-speck{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.15)}}
+@media(prefers-reduced-motion:reduce){.hero h1.tech-title span.tech-kicked{animation:none}.hero h1.tech-title span::after{transition:none}.tech-speck{display:none}}
+
+/* ---------- hero ---------- */
+.hero{min-height:100svh;display:grid;place-items:center;text-align:center;padding:110px var(--gut) 90px;overflow:hidden;isolation:isolate}
+.orb{position:absolute;z-index:-1;left:50%;top:52%;width:min(92vw,980px);aspect-ratio:1;translate:-50% -50%;border-radius:50%;
+  background:radial-gradient(circle,rgba(238,90,34,.95) 0,rgba(238,90,34,.78) 22%,rgba(246,162,58,.42) 48%,rgba(246,162,58,0) 70%);
+  filter:blur(2px);animation:breathe 9s ease-in-out infinite alternate}
+@keyframes breathe{to{scale:1.07;opacity:.9}}
+.hero h1{margin:0;font-size:clamp(70px,17vw,260px);font-weight:300;letter-spacing:.14em;margin-right:-.14em;white-space:nowrap}
+.hero h1 span{display:inline-block;transition:font-variation-settings .15s linear}
+.hero .tag{max-width:30ch;margin:28px auto 0;font:400 clamp(18px,2.2vw,26px)/1.3 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 40}
+.hero .tag em{color:#fff}
+.discover{margin-top:56px;display:inline-flex;flex-direction:column;align-items:center;gap:12px;text-decoration:none;font:600 11px var(--sans);letter-spacing:.22em;text-transform:uppercase}
+.discover::after{content:"";width:1px;height:54px;background:var(--ink);transform-origin:top;animation:drop 2.2s cubic-bezier(.6,0,.2,1) infinite}
+@keyframes drop{0%{transform:scaleY(0)}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+.ring{position:absolute;right:var(--gut);bottom:34px;width:118px;height:118px;animation:spin 28s linear infinite}
+.ring text{font:600 10.5px var(--sans);letter-spacing:.28em;text-transform:uppercase;fill:var(--ink)}
+@keyframes spin{to{rotate:360deg}}
+@media(max-width:700px){.ring{display:none}.hero h1{letter-spacing:.08em;font-size:30vw}#stock th:nth-child(2),#stock td:nth-child(2){display:none}}
+
+/* ---------- statements ---------- */
+.statement{padding:clamp(80px,14vw,200px) var(--gut);text-align:center}
+.statement .big{font-size:clamp(54px,12vw,190px);text-transform:uppercase;margin:0}
+.statement .big i{font-style:italic;font-weight:200;text-transform:lowercase;color:var(--sun)}
+.statement .sub{font-size:clamp(34px,7vw,110px);margin:clamp(40px,8vw,120px) auto 0;max-width:15em;line-height:.98}
+.statement .sub b{font-weight:800;text-transform:uppercase;font-variation-settings:"SOFT" 100,"WONK" 0,"opsz" 144}
+.statement .sub sup{font-size:.4em;color:var(--sun);vertical-align:.9em}
+.foot{margin:34px auto 0;max-width:40ch;color:var(--mute);font-size:14px}
+.lead{max-width:760px;margin:0 auto;padding:0 var(--gut) 40px;text-align:center;font:400 clamp(19px,2.2vw,26px)/1.45 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 36}
+.btn{display:inline-flex;align-items:center;gap:12px;border:1px solid var(--ink);padding:15px 26px;border-radius:99px;text-decoration:none;
+  font:600 11px var(--sans);letter-spacing:.2em;text-transform:uppercase;background:transparent;transition:background .3s,color .3s,gap .3s}
+.btn:hover{background:var(--ink);color:var(--paper);gap:20px}
+.btn.solid{background:var(--ink);color:var(--paper)} .btn.solid:hover{background:var(--sun);border-color:var(--sun);color:#fff}
+.cta-row{text-align:center;padding-bottom:clamp(70px,10vw,150px)}
+
+/* ---------- family list ---------- */
+.family{padding:clamp(40px,7vw,100px) 0 clamp(70px,10vw,140px);border-top:1px solid var(--line)}
+.family .head{display:flex;justify-content:space-between;align-items:baseline;gap:20px;padding:40px var(--gut) 10px;flex-wrap:wrap}
+.family h2,.sec h2{margin:0;font-size:clamp(40px,7vw,104px)}
+.family .set{padding:clamp(24px,4vw,56px) var(--gut) 0;text-align:center}
+.family .set .eyebrow{display:block;margin-bottom:18px}
+.fam{display:flex;flex-wrap:wrap;justify-content:center;align-items:baseline;gap:.1em .5em;font-size:clamp(40px,8.6vw,132px);line-height:1.02}
+.fam .w{font-family:var(--serif);font-variation-settings:"SOFT" 100,"opsz" 144;transition:font-weight .35s,font-variation-settings .35s,color .3s;cursor:default;position:relative;white-space:nowrap}
+.fam .w:hover{color:var(--sun);font-weight:900}
+.fam .w small{font:600 11px var(--sans);letter-spacing:.14em;position:absolute;top:-.1em;right:-1.6em;color:var(--mute)}
+.fam .w.it{font-style:italic}
+.fam .d{color:var(--sun);font-size:.45em;align-self:center;opacity:.9}
+.fam-note{max-width:48ch;margin:22px auto 0;text-align:center;color:var(--mute);font-size:14px}
+
+/* ---------- section scaffold ---------- */
+.sec{padding:clamp(70px,10vw,150px) var(--gut);border-top:1px solid var(--line)}
+.sec .head{display:grid;grid-template-columns:1fr minmax(0,34ch);gap:30px;align-items:end;margin-bottom:clamp(30px,5vw,64px)}
+.sec .head p{margin:0;color:var(--mute);font-size:15px}
+@media(max-width:820px){.sec .head{grid-template-columns:1fr}}
+.reveal{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
+.reveal.in{opacity:1;transform:none}
+.no-js .reveal{opacity:1;transform:none}
+
+/* ---------- KPI numerals ---------- */
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));border-top:1px solid var(--ink)}
+.kpi{padding:26px 22px 30px 0;border-bottom:1px solid var(--line)}
+.kpi b{display:block;font:300 clamp(54px,7vw,104px)/1 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 144;letter-spacing:-.03em;font-variant-numeric:lining-nums}
+.kpi span{display:block;margin-top:10px;font:600 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
+.kpi.s b{color:var(--stockout)} .kpi.a b{color:var(--at-risk)} .kpi.e b{color:var(--excess)} .kpi.o b{color:var(--ok)}
+.meta{margin-top:26px;color:var(--mute);font-size:13px}
+
+/* ---------- calculator (type-tester) ---------- */
+.lab{background:var(--night);color:var(--paper);border-radius:0;overflow:hidden}
+.lab .sec{border:0}
+.lab .eyebrow,.lab .head p{color:#a79d8c}
+.ctrl{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:26px 34px;margin-bottom:34px}
+.ctrl label{display:block;font:600 11px var(--sans);letter-spacing:.18em;text-transform:uppercase;color:#a79d8c}
+.ctrl label output{float:right;color:var(--sun-2);font-family:var(--mono);letter-spacing:0;font-size:13px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;background:transparent;margin:8px 0 0}
+input[type=range]::-webkit-slider-runnable-track{height:1px;background:currentColor;opacity:.5}
+input[type=range]::-moz-range-track{height:1px;background:currentColor;opacity:.5}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--sun);margin-top:-9px;border:0;box-shadow:0 0 0 6px rgba(238,90,34,.22)}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--sun);border:0;box-shadow:0 0 0 6px rgba(238,90,34,.22)}
+.bar-row{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:34px}
+.sel{background:transparent;border:1px solid currentColor;border-radius:99px;padding:13px 22px;font:500 14px var(--sans);min-width:min(100%,340px);appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);background-position:calc(100% - 22px) 52%,calc(100% - 16px) 52%;background-size:6px 6px;background-repeat:no-repeat;color:inherit}
+.sel option{color:#111;background:#fff}
+.btn.lt{border-color:var(--paper);color:var(--paper)} .btn.lt:hover{background:var(--paper);color:var(--night)}
+.out{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:clamp(20px,4vw,60px);align-items:start;border-top:1px solid rgba(242,236,222,.3);padding-top:34px}
+.out .hero-n{font:300 clamp(100px,19vw,280px)/.82 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 144;letter-spacing:-.05em;color:var(--sun-2)}
+.out .lbl{font:600 11px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:#a79d8c;margin-bottom:12px}
+.out .mid{font:300 clamp(46px,6vw,92px)/1 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 144;letter-spacing:-.03em}
+.out small{display:block;margin-top:10px;font:400 13px/1.45 var(--sans);color:#a79d8c;max-width:26ch}
+@media(max-width:820px){.out{grid-template-columns:1fr 1fr}.out>div:first-child{grid-column:1/-1}}
+.gauge{margin-top:40px;position:relative;height:56px}
+.gauge .track{position:absolute;left:0;right:0;top:26px;height:1px;background:rgba(242,236,222,.35)}
+.gauge .seg{position:absolute;top:18px;height:17px;border-radius:2px;transition:left .5s cubic-bezier(.2,.7,.2,1),width .5s cubic-bezier(.2,.7,.2,1)}
+.gauge .pin{position:absolute;top:0;width:1px;height:56px;background:var(--paper);transition:left .5s cubic-bezier(.2,.7,.2,1)}
+.gauge .pin span{position:absolute;top:-2px;left:8px;white-space:nowrap;font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase}
+.legend{display:flex;gap:22px;flex-wrap:wrap;margin-top:18px;font:500 12px var(--sans);color:#a79d8c}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:8px;vertical-align:-2px}
+.formula{font:400 12.5px/1.8 var(--mono);color:#cfc5b2;margin:36px 0 0;border-left:2px solid var(--sun);padding-left:18px;white-space:pre-wrap}
+
+/* ---------- forecast ---------- */
+.fc{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:clamp(24px,5vw,70px)}
+@media(max-width:900px){.fc{grid-template-columns:1fr}}
+.paper-sel{border:1px solid var(--ink);color:var(--ink)}
+.models{margin-top:26px;display:flex;flex-direction:column}
+.model{display:grid;grid-template-columns:150px 1fr 64px;gap:14px;align-items:center;padding:14px 0;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;font:500 14px var(--sans);position:relative}
+.model .bar{height:12px;background:var(--paper-2);position:relative}
+.model .bar i{position:absolute;inset:0 auto 0 0;background:var(--mute);transition:width .6s cubic-bezier(.2,.7,.2,1)}
+.model[aria-pressed=true]{font-weight:700}
+.model[aria-pressed=true] .bar i{background:var(--sun)}
+.model .tick{position:absolute;top:-4px;bottom:-4px;width:1px;background:var(--ink)}
+.model b{font:500 13px var(--mono);text-align:right}
+.model em{font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;font-style:normal;color:var(--sun);display:block}
+.verdict{margin-top:24px;font:400 clamp(20px,2.2vw,28px)/1.3 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 48}
+.verdict b{font-weight:700;color:var(--sun)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:22px}
+.stats div{border-top:1px solid var(--ink);padding-top:8px}
+.stats b{display:block;font:400 22px var(--serif);font-variation-settings:"SOFT" 100}
+.stats span{font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+.plot{border:1px solid var(--ink);background:#fbf8f0;padding:18px;min-height:340px;display:flex;flex-direction:column}
+.plot svg{width:100%;height:auto;display:block}
+.plot .nolines{margin:auto;max-width:34ch;text-align:center;color:var(--mute);font:italic 400 20px/1.35 var(--serif)}
+.plot h4{margin:0 0 10px;font:600 11px var(--sans);letter-spacing:.18em;text-transform:uppercase;color:var(--mute)}
+.axis text{font:500 10px var(--mono);fill:var(--mute)}
+
+/* ---------- filters ---------- */
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:22px;align-items:center}
+.chip{border:1px solid var(--ink);background:transparent;border-radius:99px;padding:9px 16px;font:600 11px var(--sans);letter-spacing:.16em;text-transform:uppercase;transition:all .25s}
+.chip:hover{background:var(--paper-2)}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.chip .n{opacity:.6;margin-left:6px;font-family:var(--mono);letter-spacing:0}
+.search{margin-left:auto;border:0;border-bottom:1px solid var(--ink);background:transparent;padding:9px 2px;font:500 14px var(--sans);min-width:220px;color:inherit;border-radius:0}
+.search:focus{outline:none;border-color:var(--sun)}
+.tw{overflow:auto;border-top:1px solid var(--ink)}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{font:600 10.5px var(--sans);letter-spacing:.16em;text-transform:uppercase;color:var(--mute);text-align:left;padding:14px 14px 14px 0;white-space:nowrap;border-bottom:1px solid var(--line)}
+th.num,td.num{text-align:right}
+td{padding:14px 14px 14px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+td.num{font-family:var(--mono);font-size:13px;white-space:nowrap}
+tbody tr{transition:background .2s}
+tbody tr:hover{background:rgba(238,90,34,.07)}
+.prod b{display:block;font:500 17px var(--serif);font-variation-settings:"SOFT" 100,"opsz" 24}
+.prod span{font:400 12px var(--mono);color:var(--mute)}
+.flag{display:inline-flex;align-items:center;gap:8px;font:700 10px var(--sans);letter-spacing:.16em;text-transform:uppercase}
+.flag::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
+.flag.STOCKOUT{color:var(--stockout)} .flag.AT_RISK{color:var(--at-risk)} .flag.EXCESS{color:var(--excess)} .flag.OK{color:var(--ok)}
+.cov{width:130px;height:6px;background:var(--paper-2);position:relative;display:inline-block;vertical-align:middle;margin-right:10px}
+.cov i{position:absolute;inset:0 auto 0 0}
+.empty{padding:40px 0;color:var(--mute);font:italic 20px var(--serif)}
+
+/* ---------- suppliers ---------- */
+.sup{display:grid;grid-template-columns:90px minmax(0,1.6fr) minmax(0,2fr) 110px;gap:24px;align-items:center;padding:26px 0;border-bottom:1px solid var(--line)}
+.sup:first-child{border-top:1px solid var(--ink)}
+.grade{font:300 76px/1 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 144;letter-spacing:-.04em}
+.grade.A,.grade.B{color:var(--ok)} .grade.C{color:var(--at-risk)} .grade.D{color:var(--stockout)}
+.sup h3{margin:0;font:500 22px/1.15 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 36}
+.sup p{margin:4px 0 0;font:400 12.5px var(--mono);color:var(--mute)}
+.meter{height:10px;background:var(--paper-2);position:relative}
+.meter i{position:absolute;inset:0 auto 0 0;background:var(--ink);width:0;transition:width 1.1s cubic-bezier(.2,.7,.2,1)}
+.meter-l{display:flex;justify-content:space-between;font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.sup .score{text-align:right;font:400 34px var(--serif);font-variation-settings:"SOFT" 100}
+.sup .score small{display:block;font:600 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+@media(max-width:760px){.sup{grid-template-columns:64px 1fr;}.sup .grade{font-size:54px}.sup>div:nth-child(3){grid-column:1/-1}.sup .score{grid-column:1/-1;text-align:left}}
+.trend{margin-top:60px}
+.trend h3{font:600 11px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--mute);margin:0 0 14px}
+
+/* ---------- story (charts) ---------- */
+.story{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,8fr);gap:clamp(24px,5vw,80px);align-items:start}
+@media(max-width:900px){.story{grid-template-columns:1fr}}
+.story ol{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink)}
+.story li button{width:100%;display:grid;grid-template-columns:44px 1fr;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:15px 0;
+  font:400 clamp(19px,1.9vw,25px)/1.15 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 36;transition:padding .3s,color .3s}
+.story li button span{font:600 11px var(--mono);color:var(--mute);padding-top:7px}
+.story li button:hover,.story li button[aria-current=true]{color:var(--sun);padding-left:12px}
+.frame{position:sticky;top:84px;border:1px solid var(--ink);padding:14px;background:#fbf8f0}
+.frame img{width:100%;height:auto;display:block;background:#fff;transition:opacity .35s}
+.frame figcaption{padding:18px 6px 6px;font:400 17px/1.5 var(--serif);font-variation-settings:"SOFT" 100,"opsz" 24;min-height:7.5em}
+.frame figcaption b{font:700 10px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:var(--sun);display:block;margin-bottom:6px}
+
+/* ---------- quote ---------- */
+.quote{background:var(--sun);color:#1b0d04;padding:clamp(80px,12vw,180px) var(--gut);text-align:center;position:relative;overflow:hidden}
+.quote .eyebrow{color:#1b0d04;opacity:.75}
+.quote blockquote{margin:30px auto 0;max-width:19em;font:300 clamp(36px,6.4vw,98px)/1.02 var(--serif);font-variation-settings:"SOFT" 100,"WONK" 1,"opsz" 144;letter-spacing:-.03em}
+.quote blockquote em{font-weight:800}
+.quote cite{display:block;margin-top:46px;font:600 11px var(--sans);letter-spacing:.22em;text-transform:uppercase;font-style:normal}
+
+/* ---------- API ---------- */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.codebox{background:var(--night);color:#d9cfbc;border-radius:2px;overflow:hidden}
+.codebox .top{display:flex;gap:14px;align-items:center;padding:14px 20px;border-bottom:1px solid rgba(242,236,222,.15);font:500 13px var(--mono);flex-wrap:wrap}
+.codebox .v{color:var(--sun-2);font-weight:700} .codebox .st{margin-left:auto;font-weight:700}
+.codebox .st.ok{color:#8fd0a0} .codebox .st.bad{color:#ff8f78}
+.codebox .desc{padding:14px 20px 0;font:400 13px var(--sans);color:#a79d8c}
+.codebox pre{margin:0;padding:16px 20px 22px;overflow:auto;max-height:440px;font:400 12.5px/1.6 var(--mono);white-space:pre}
+
+/* ---------- start / footer ---------- */
+.start{text-align:center;padding:clamp(90px,14vw,210px) var(--gut) clamp(60px,8vw,110px);border-top:1px solid var(--line)}
+.start h2{font-size:clamp(48px,10vw,160px);margin:0 0 64px;line-height:1.02}
+.start h2 i{color:var(--sun);font-weight:200}
+.run{max-width:760px;margin:60px auto 0;text-align:left}
+footer{background:var(--night);color:var(--paper);padding:70px var(--gut) 40px}
+footer .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:40px;max-width:1500px;margin:auto}
+footer h5{margin:0 0 16px;font:600 11px var(--sans);letter-spacing:.2em;text-transform:uppercase;color:#a79d8c}
+footer a{display:block;text-decoration:none;padding:4px 0;font:400 17px var(--serif);font-variation-settings:"SOFT" 100,"opsz" 24;transition:color .2s,padding .25s}
+footer a:hover{color:var(--sun-2);padding-left:6px}
+footer .base{max-width:1500px;margin:60px auto 0;padding-top:24px;border-top:1px solid rgba(242,236,222,.2);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font:500 12px var(--sans);color:#a79d8c}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  .reveal{opacity:1;transform:none}
+}
+@media print{.nav,.progress,.ring{display:none}.reveal{opacity:1;transform:none}}
+</style>
+</head>
+<body class="no-js">
+<div class="progress" aria-hidden="true"></div>
+
+<header class="nav">
+  <a class="brand" href="#top"><i>Project</i> 24</a>
+  <nav aria-label="Sections"><ul>
+    <li><a class="l" href="#family">Intro</a></li>
+    <li><a class="l" href="#test">Test</a></li>
+    <li><a class="l" href="#forecast">Forecast</a></li>
+    <li><a class="l" href="#stock">Stock</a></li>
+    <li><a class="l" href="#suppliers">Suppliers</a></li>
+    <li><a class="l" href="#story">Story</a></li>
+    <li><a class="l" href="#api">API</a></li>
+  </ul></nav>
+</header>
+
+<main id="top">
+<!-- HERO -->
+<section class="hero">
+  <div class="orb" aria-hidden="true"></div>
+  <div>
+    <div class="eyebrow" style="color:var(--ink)">Project 24 &nbsp;·&nbsp; Supply chain optimization &amp; inventory forecasting</div>
+    <h1 class="display tech-title" id="heroTitle" aria-label="Flow"><span>F</span><span>l</span><span>o</span><span>w</span></h1>
+    <p class="tag">A contemporary, decision-support system for the <em>rhythm</em> of demand, supply and stock.</p>
+    <a class="discover" href="#statement">Scroll to discover</a>
+  </div>
+  <svg class="ring" viewBox="0 0 120 120" aria-hidden="true"><defs><path id="c" d="M60 60m-46 0a46 46 0 1 1 92 0a46 46 0 1 1-92 0"/></defs><text><textPath href="#c">Demand · Supply · Signal · Stock ·</textPath></text></svg>
+</section>
+
+<!-- STATEMENTS -->
+<section class="statement" id="statement">
+  <h2 class="display big reveal">Stock <i>di</i> Signal</h2>
+  <p class="display sub reveal">A reorder point — inspired by the rhythm of human <b>demand</b><sup>*</sup></p>
+  <p class="foot reveal">*Synthetic data, honest method. Every number on this page is computed from the project’s own database, formulas and tests.</p>
+</section>
+<p class="lead reveal">Flow is a variable, versatile planning system: it reads demand and supplier history, calculates documented reorder points, scores deliveries and tests forecasts against a naive baseline — then shows its working so a planner can decide.</p>
+<div class="cta-row reveal"><a class="btn solid" href="#test">Try the reorder calculator <span aria-hidden="true">↘</span></a></div>
+
+<!-- FAMILY -->
+<section class="family" id="family">
+  <div class="head"><h2 class="display reveal">Explore the family</h2><span class="eyebrow">Flags · Classes · Grades · Models</span></div>
+  <div class="set reveal"><span class="eyebrow">Risk flags</span><div class="fam" id="famFlags"></div></div>
+  <div class="set reveal"><span class="eyebrow">ABC classes</span><div class="fam" id="famAbc"></div></div>
+  <div class="set reveal"><span class="eyebrow">Supplier grades</span><div class="fam" id="famGrades"></div></div>
+  <div class="set reveal"><span class="eyebrow">Forecast models</span><div class="fam" id="famModels" style="font-size:clamp(34px,6.6vw,100px)"></div></div>
+  <p class="fam-note reveal">Superscripts count the SKUs or suppliers in each family. Hover a word to turn the weight up.</p>
+</section>
+
+<!-- GLANCE -->
+<section class="sec wrap" id="glance">
+  <div class="head"><h2 class="display reveal">The portfolio, at a glance</h2><p class="reveal" id="asof"></p></div>
+  <div class="kpis reveal" id="kpis"></div>
+  <p class="meta reveal" id="meta"></p>
+</section>
+
+<!-- CALCULATOR -->
+<div class="lab" id="test">
+<section class="sec wrap" style="border:0">
+  <div class="head"><h2 class="display reveal">Test the reorder point</h2><p class="reveal">Move the sliders — or load a real SKU — and watch safety stock, reorder point and order quantity recompute with the project’s exact formulas.</p></div>
+  <div class="bar-row reveal">
+    <label class="eyebrow" for="skuSel" style="color:#a79d8c">SKU</label>
+    <select class="sel" id="skuSel" aria-label="Load a real SKU"></select>
+    <button class="btn lt" id="randSku" type="button">Generate new SKU ↻</button>
+  </div>
+  <div class="ctrl reveal">
+    <div><label for="mu">Avg demand <output id="muO"></output></label><input id="mu" type="range" min="0.2" max="240" step="any"></div>
+    <div><label for="sd">Variability σ <output id="sdO"></output></label><input id="sd" type="range" min="0" max="120" step="any"></div>
+    <div><label for="lt">Lead time (days) <output id="ltO"></output></label><input id="lt" type="range" min="1" max="45" step="any"></div>
+    <div><label for="sl">Service level <output id="slO"></output></label><input id="sl" type="range" min="0.80" max="0.999" step="any"></div>
+    <div><label for="rv">Review period (days) <output id="rvO"></output></label><input id="rv" type="range" min="1" max="30" step="1"></div>
+    <div><label for="oh">On hand + on order <output id="ohO"></output></label><input id="oh" type="range" min="0" max="3000" step="any"></div>
+  </div>
+  <div class="out reveal" aria-live="polite">
+    <div><div class="lbl">Reorder point (units)</div><div class="hero-n" id="oRop">0</div></div>
+    <div><div class="lbl">Safety stock</div><div class="mid" id="oSs">0</div><small id="oSsN"></small></div>
+    <div><div class="lbl">Order now</div><div class="mid" id="oQ">0</div><small id="oQN"></small></div>
+  </div>
+  <div class="gauge reveal" aria-hidden="true"><div class="track"></div><div class="seg" id="gLead" style="background:var(--sun-2)"></div><div class="seg" id="gSafe" style="background:var(--sun)"></div><div class="pin" id="gPin"><span>Position</span></div></div>
+  <div class="legend reveal"><span><i style="background:var(--sun-2)"></i>Demand during lead time</span><span><i style="background:var(--sun)"></i>Safety stock</span><span><i style="background:var(--paper)"></i>Inventory position</span><span id="cover"></span></div>
+  <pre class="formula reveal">SS_z = z(service) · σ · √L        SS_d = safety_days · μ        SS = max(SS_z, SS_d)
+ROP  = μ · L + SS                 T = ROP + μ · review          Q = max(0, T − position)</pre>
+</section>
+</div>
+
+<!-- FORECAST -->
+<section class="sec wrap" id="forecast">
+  <div class="head"><h2 class="display reveal">Test the forecast</h2><p class="reveal">Four models are scored on a 28-day hold-out. A model replaces the naive baseline only if it wins by more than 5%. Pick a SKU, pick a model.</p></div>
+  <div class="fc">
+    <div class="reveal">
+      <select class="sel paper-sel" id="fcSel" aria-label="Choose a SKU"></select>
+      <div class="models" id="models" role="group" aria-label="Forecast models"></div>
+      <p class="verdict" id="verdict"></p>
+      <div class="stats" id="fcStats"></div>
+    </div>
+    <div class="plot reveal"><h4 id="plotTitle">Forward forecast</h4><div id="plot" style="flex:1;display:flex;flex-direction:column"></div></div>
+  </div>
+</section>
+
+<!-- STOCK -->
+<section class="sec wrap" id="stock">
+  <div class="head"><h2 class="display reveal">Stock under watch</h2><p class="reveal">Reorder recommendations for all 24 SKUs. “Position” is on hand plus open orders; the flag compares it with the calculated reorder point. Suggestions only — nothing is ordered.</p></div>
+  <div class="chips reveal" id="flagChips"></div>
+  <div class="tw reveal"><table><thead><tr>
+    <th>SKU</th><th>Supplier</th><th>Cover</th><th class="num">Position / ROP</th><th>Flag</th><th class="num">Suggest</th><th class="num">Value (₹)</th>
+  </tr></thead><tbody id="stockBody"></tbody></table></div>
+  <div class="empty" id="stockEmpty" hidden>No SKU matches.</div>
+  <p class="meta reveal">ROP = calculated reorder point under the default policy (service 0.95, safety = max of z-score and 7 days). Cover bar is capped at 120 days.</p>
+</section>
+
+<!-- SUPPLIERS -->
+<section class="sec wrap" id="suppliers">
+  <div class="head"><h2 class="display reveal">Suppliers, measured</h2><p class="reveal">Score = 100 × (0.6 × on-time rate + 0.4 × consistency). Lead time is received − ordered; on-time means received by the expected date.</p></div>
+  <div class="chips reveal" id="gradeChips"></div>
+  <div id="supList"></div>
+  <div class="trend reveal"><h3>On-time rate by month — all suppliers</h3><div id="trend"></div></div>
+</section>
+
+<!-- STORY -->
+<section class="sec wrap" id="story">
+  <div class="head"><h2 class="display reveal">The story, in ten charts</h2><p class="reveal">Hover or tap a title to reveal its chart and the written interpretation that ships with it.</p></div>
+  <div class="story reveal">
+    <ol id="storyList"></ol>
+    <figure class="frame"><img id="storyImg" alt=""><figcaption id="storyCap"></figcaption></figure>
+  </div>
+</section>
+
+<!-- QUOTE -->
+<section class="quote">
+  <span class="eyebrow">From the builder</span>
+  <blockquote class="reveal">“The system never places an order. It shows its <em>working</em>, so a person can decide.”</blockquote>
+  <cite>__AUTHOR__ — Project 24</cite>
+</section>
+
+<!-- API -->
+<section class="sec wrap" id="api">
+  <div class="head"><h2 class="display reveal">Explore the API</h2><p class="reveal">Real responses captured from the Flask app — the same code path a browser or Postman would hit — including one deliberate validation failure.</p></div>
+  <div class="tabs reveal" id="apiTabs" role="tablist"></div>
+  <div class="codebox reveal"><div class="top"><span class="v" id="apiV"></span><span id="apiP"></span><span class="st" id="apiS"></span></div><div class="desc" id="apiD"></div><pre id="apiB"></pre></div>
+</section>
+
+<!-- START -->
+<section class="start">
+  <h2 class="display reveal">Start planning with <i>Flow</i></h2>
+  <div class="cta-row reveal" style="padding:0"><a class="btn solid" href="#test">Back to the calculator ↑</a>&nbsp; <a class="btn" href="../reports/analysis_report.md">Read the full report</a></div>
+  <div class="run reveal"><div class="codebox"><pre>cd project24_scm
+python -m venv .venv &amp;&amp; source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env                 # set DB_USER / DB_PASSWORD
+python scripts/load_sql.py sql/schema.sql
+python scripts/generate_seed_data.py --load
+python scripts/run_pipeline.py       # tables + charts + report
+python run.py                        # API + explorer on :5000
+python -m pytest tests -q            # 199 tests</pre></div></div>
+</section>
+</main>
+
+<footer>
+  <div class="cols">
+    <div><h5>Project</h5><a href="#family">Intro</a><a href="#test">Calculator</a><a href="#forecast">Forecast</a><a href="#stock">Stock</a></div>
+    <div><h5>Deliverables</h5><a href="Project24_Final_Report.docx">Final report (.docx)</a><a href="../presentation/Project24_Demo.pptx">Slide deck (.pptx)</a><a href="../reports/analysis_report.md">Analysis report</a><a href="../reports/tables/analysis_workbook.xlsx">Excel workbook</a></div>
+    <div><h5>Documentation</h5><a href="02_database_design.md">Database design</a><a href="03_api_reference.md">API reference</a><a href="04_analysis_methodology.md">Methodology</a><a href="05_test_report.md">Test report</a></div>
+    <div><h5>Built with</h5><a href="https://flask.palletsprojects.com" rel="noopener">Flask</a><a href="https://pandas.pydata.org" rel="noopener">pandas · NumPy</a><a href="https://matplotlib.org" rel="noopener">Matplotlib</a><a href="https://mariadb.org" rel="noopener">MySQL / MariaDB</a></div>
+  </div>
+  <div class="base"><span>Project 24 · Synthetic data · Decision support only — no purchase order is placed automatically.</span><span>Generated __GENERATED__ · Type set in Fraunces &amp; Inter Tight</span></div>
+</footer>
+
+<script id="data" type="application/json">__DATA__</script>
+<script id="charts" type="application/json">__CHARTS__</script>
+<script>
+(function(){
+"use strict";
+document.body.classList.remove("no-js");
+var D=JSON.parse(document.getElementById("data").textContent);
+var CH=JSON.parse(document.getElementById("charts").textContent);
+var $=function(s,r){return (r||document).querySelector(s)};
+var el=function(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e};
+var fmt=function(n,d){return Number(n).toLocaleString("en-IN",{maximumFractionDigits:d==null?0:d,minimumFractionDigits:d==null?0:d})};
+var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
+
+/* ---------- reveal, progress, nav ---------- */
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}})},{threshold:.12,rootMargin:"0px 0px -6% 0px"});
+function watch(){document.querySelectorAll(".reveal:not(.in)").forEach(function(n){io.observe(n)})}
+var links=[].slice.call(document.querySelectorAll("a.l"));
+var secs=links.map(function(a){return $(a.getAttribute("href"))});
+function onScroll(){
+  var h=document.documentElement,p=h.scrollTop/((h.scrollHeight-innerHeight)||1);
+  $(".progress").style.setProperty("--p",p);
+  var cur=-1;secs.forEach(function(s,i){if(s&&s.getBoundingClientRect().top<innerHeight*.4)cur=i});
+  links.forEach(function(a,i){a.classList.toggle("cur",i===cur)});
+}
+addEventListener("scroll",onScroll,{passive:true});onScroll();
+
+
+/* ---------- TechText-inspired letter reveal, kick and particle burst ---------- */
+(function(){
+  var title=document.querySelector('#heroTitle.tech-title');
+  if(!title)return;
+  var letters=[].slice.call(title.querySelectorAll('span'));
+  letters.forEach(function(letter){letter.setAttribute('data-char',letter.textContent.trim());letter.setAttribute('tabindex','0');letter.setAttribute('role','button');letter.setAttribute('aria-label','Animate letter '+letter.textContent.trim());});
+  var active=null;
+  function setActive(letter){
+    if(active===letter)return;
+    if(active)active.classList.remove('tech-active');
+    active=letter;
+    if(active)active.classList.add('tech-active');
+  }
+  function burst(letter){
+    if(!letter)return;
+    letter.classList.remove('tech-kicked');
+    void letter.offsetWidth;
+    letter.classList.add('tech-kicked');
+    window.setTimeout(function(){letter.classList.remove('tech-kicked')},650);
+    if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    var r=letter.getBoundingClientRect(),parent=title.parentElement;
+    for(var i=0;i<15;i++){
+      var dot=document.createElement('i');dot.className='tech-speck';
+      dot.style.left=(r.left-parent.getBoundingClientRect().left+r.width/2)+'px';
+      dot.style.top=(r.top-parent.getBoundingClientRect().top+r.height/2)+'px';
+      dot.style.setProperty('--dx',(Math.random()*100-50)+'px');
+      dot.style.setProperty('--dy',(Math.random()*-90-8)+'px');
+      parent.appendChild(dot);dot.addEventListener('animationend',function(){this.remove()},{once:true});
+    }
+  }
+  title.addEventListener('pointermove',function(e){
+    var hit=e.target.closest('span');
+    if(hit&&title.contains(hit))setActive(hit);
+    else{
+      var nearest=null,best=Infinity;
+      letters.forEach(function(letter){var r=letter.getBoundingClientRect(),d=Math.hypot(e.clientX-(r.left+r.width/2),e.clientY-(r.top+r.height/2));if(d<best){best=d;nearest=letter}});
+      setActive(best<180?nearest:null);
+    }
+  });
+  title.addEventListener('pointerleave',function(){setActive(null)});
+  title.addEventListener('click',function(e){var hit=e.target.closest('span');if(hit&&title.contains(hit))burst(hit)});
+  title.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target.matches('span')){e.preventDefault();burst(e.target)}});
+})();
+
+
+/* ---------- hero: variable weight follows the pointer ---------- */
+(function(){
+  var spans=[].slice.call(document.querySelectorAll("#heroTitle span"));
+  function set(x,y){spans.forEach(function(s){
+    var r=s.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;
+    var d=Math.hypot(x-cx,y-cy),t=Math.max(0,1-d/520);
+    s.style.fontWeight=Math.round(200+t*700);
+    s.style.fontVariationSettings='"SOFT" 100,"WONK" '+(t>.55?1:0)+',"opsz" 144';
+  })}
+  if(!reduce){
+    addEventListener("pointermove",function(e){set(e.clientX,e.clientY)},{passive:true});
+    var t0=performance.now();
+    (function idle(){ if(!window.__moved){var t=(performance.now()-t0)/1000;
+      spans.forEach(function(s,i){var w=Math.sin(t*.9-i*.7)*.5+.5;s.style.fontWeight=Math.round(220+w*520)});
+      requestAnimationFrame(idle)}})();
+    addEventListener("pointermove",function(){window.__moved=true},{once:true});
+  }
+})();
+
+/* ---------- family lists ---------- */
+function fam(id,items,cls){
+  var box=$(id),out=[];
+  items.forEach(function(it,i){
+    if(i)out.push('<span class="d" aria-hidden="true">✺</span>');
+    out.push('<span class="w'+(it.it?" it":"")+'" style="font-weight:'+(it.w||300)+'">'+esc(it.t)+'<small>'+it.n+'</small></span>');
+  });
+  box.innerHTML=out.join("");
+}
+var P=D.portfolio;
+fam("#famFlags",[{t:"Stockout",n:P.stockout,w:800},{t:"At risk",n:P.at_risk,w:500,it:1},{t:"Excess",n:P.excess,w:300},{t:"OK",n:P.ok,w:200,it:1}]);
+fam("#famAbc",[{t:"Class A",n:P.abc_counts.A,w:800},{t:"Class B",n:P.abc_counts.B,w:400,it:1},{t:"Class C",n:P.abc_counts.C,w:200}]);
+var gc={};D.suppliers.forEach(function(s){gc[s.grade]=(gc[s.grade]||0)+1});
+fam("#famGrades",Object.keys(gc).sort().map(function(g,i){return {t:"Grade "+g,n:gc[g],w:[800,600,400,250][i]||300,it:i%2}}));
+fam("#famModels",[{t:"Naive mean",n:D.forecast.models_selected.naive_mean||0,w:300},{t:"Moving average",n:D.forecast.models_selected.moving_average||0,w:400,it:1},{t:"Holt-Winters",n:D.forecast.models_selected.holt_winters||0,w:800},{t:"Seasonal naive",n:D.forecast.models_selected.seasonal_naive||0,w:300,it:1}]);
+
+/* ---------- KPIs ---------- */
+$("#asof").textContent="Analysis as of "+D.as_of_h+" · demand window "+D.params.window_days+" days · all values in INR.";
+var kp=[["SKUs analysed",P.products,"",0,""],["Stockout risk",P.stockout,"s",0,""],["At risk",P.at_risk,"a",0,""],["Excess stock",P.excess,"e",0,""],["OK",P.ok,"o",0,""],
+ ["Inventory on hand",P.inventory_value/1e5,"",1,"lakh ₹"],["Suggested orders (not placed)",P.suggested_order_value/1e5,"",1,"lakh ₹"],["Avg days of cover",P.avg_days_of_cover,"",1,""],
+ ["Forecast error (MAE, units/day)",D.forecast.mean_mae_selected,"",2,""],["SKUs beating the baseline",D.forecast.improved_over_baseline,"",0,"of "+D.forecast.products_evaluated]];
+$("#kpis").innerHTML=kp.map(function(k,i){return '<div class="kpi '+k[2]+'"><b data-to="'+k[1]+'" data-d="'+k[3]+'">0</b><span>'+k[0]+(k[4]?' · '+k[4]:'')+'</span></div>'}).join("");
+$("#meta").innerHTML="Service level "+D.params.service_level.toFixed(2)+" · safety-stock policy <code>"+D.params.safety_stock_policy+"</code> · excess above "+D.params.excess_cover_days+" days of cover · forecast horizon "+D.params.forecast_horizon_days+" days. Mean forecast improvement over the naive baseline: "+D.forecast.mean_improvement_pct+"%.";
+(function(){
+  var ko=new IntersectionObserver(function(es){es.forEach(function(e){if(!e.isIntersecting)return;ko.unobserve(e.target);
+    var n=e.target,to=+n.dataset.to,d=+n.dataset.d,t0=performance.now(),dur=reduce?1:1400;
+    (function tick(now){var t=Math.min(1,(now-t0)/dur),v=to*(1-Math.pow(1-t,4));n.textContent=fmt(v,d);if(t<1)requestAnimationFrame(tick)})(t0);
+  })},{threshold:.5});
+  document.querySelectorAll(".kpi b").forEach(function(b){ko.observe(b)});
+})();
+
+/* ---------- calculator ---------- */
+function zInv(p){ // Acklam's rational approximation of the normal quantile
+  var a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239],
+      b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],
+      c=[-.007784894002430293,-.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],
+      d=[.007784695709041462,.3224671290700398,2.445134137142996,3.754408661907416],q,r;
+  if(p<.02425){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)}
+  if(p>1-.02425){q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1)}
+  q=p-.5;r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+}
+var sel=$("#skuSel"),ids=["mu","sd","lt","sl","rv","oh"],inp={};
+ids.forEach(function(i){inp[i]=$("#"+i)});
+sel.innerHTML=D.products.map(function(p,i){return '<option value="'+i+'">'+esc(p.sku)+' — '+esc(p.name)+'</option>'}).join("");
+function setRange(id,v){var r=inp[id];if(v>+r.max)r.max=Math.ceil(v*1.4);r.value=v}
+function loadSku(i){
+  var p=D.products[i];sel.value=i;
+  setRange("mu",p.mu);setRange("sd",p.sd);setRange("lt",p.lt);inp.sl.value=D.params.service_level;inp.rv.value=D.params.review_period_days;setRange("oh",p.pos);
+  calc();
+}
+function calc(){
+  var mu=+inp.mu.value,sd=+inp.sd.value,L=+inp.lt.value,sl=+inp.sl.value,R=+inp.rv.value,pos=+inp.oh.value;
+  var z=zInv(sl),ssz=z*sd*Math.sqrt(L),ssd=D.params.safety_stock_days*mu,ss=Math.max(ssz,ssd),rop=mu*L+ss,T=rop+mu*R,Q=Math.max(0,T-pos),cover=mu>0?pos/mu:0;
+  $("#muO").textContent=mu.toFixed(1)+" /day";$("#sdO").textContent=sd.toFixed(1);$("#ltO").textContent=L.toFixed(1);$("#slO").textContent=(sl*100).toFixed(1)+"%  z="+z.toFixed(2);$("#rvO").textContent=R;$("#ohO").textContent=fmt(pos);
+  $("#oRop").textContent=fmt(rop);$("#oSs").textContent=fmt(ss);$("#oQ").textContent=fmt(Q);
+  $("#oSsN").textContent=(ssz>=ssd?"z-score rule binds":"7-day floor binds")+" · z-rule "+fmt(ssz,1)+", days-rule "+fmt(ssd,1);
+  $("#oQN").textContent=Q>0?"Order up to "+fmt(T)+" units (position "+fmt(pos)+")":"Position already covers the target level "+fmt(T);
+  var status=pos<mu*L?"STOCKOUT risk":pos<rop?"AT RISK — below ROP":"Above reorder point";
+  $("#cover").textContent=fmt(cover,1)+" days of cover · "+status;
+  var max=Math.max(rop,pos,T)*1.08||1,pc=function(v){return (v/max*100)+"%"};
+  $("#gLead").style.left="0";$("#gLead").style.width=pc(mu*L);
+  $("#gSafe").style.left=pc(mu*L);$("#gSafe").style.width=pc(ss);
+  $("#gPin").style.left=pc(pos);
+}
+ids.forEach(function(i){inp[i].addEventListener("input",calc)});
+sel.addEventListener("change",function(){loadSku(+sel.value)});
+$("#randSku").addEventListener("click",function(){var i;do{i=Math.floor(Math.random()*D.products.length)}while(i==sel.value&&D.products.length>1);loadSku(i)});
+loadSku(D.products.findIndex(function(p){return p.flag==="STOCKOUT"})>=0?D.products.findIndex(function(p){return p.flag==="STOCKOUT"}):0);
+
+/* ---------- forecast explorer ---------- */
+var MN={naive_mean:"Naive mean",moving_average:"Moving average",holt_winters:"Holt-Winters",seasonal_naive:"Seasonal naive"};
+var fsel=$("#fcSel"),fcm="naive_mean";
+fsel.innerHTML=D.forecast_products.map(function(p){return '<option value="'+p.id+'">'+esc(p.sku)+' — '+esc(p.name)+'</option>'}).join("");
+function drawPlot(pid){
+  var rows=D.future[pid],box=$("#plot"),prod=D.forecast_products.filter(function(p){return p.id==pid})[0];
+  $("#plotTitle").textContent="Forward forecast · "+prod.sku;
+  if(!rows){box.innerHTML='<p class="nolines">The 28-day forward line with its 80% band is stored for the four highest-volume SKUs. Choose '+D.future_skus.map(esc).join(", ")+' to see it.</p>';return}
+  var W=640,H=330,m={l:46,r:14,t:12,b:30},n=rows.length;
+  var lo=Math.min.apply(null,rows.map(function(r){return r[2]})),hi=Math.max.apply(null,rows.map(function(r){return r[3]}));
+  var pad=(hi-lo)*.08;lo=Math.max(0,lo-pad);hi+=pad;
+  var x=function(i){return m.l+(W-m.l-m.r)*i/(n-1)},y=function(v){return m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo))};
+  var up=rows.map(function(r,i){return x(i)+","+y(r[3])}).join(" "),dn=rows.slice().reverse().map(function(r,i){return x(n-1-i)+","+y(r[2])}).join(" "),ln=rows.map(function(r,i){return x(i)+","+y(r[1])}).join(" ");
+  var g="",k;for(k=0;k<=4;k++){var v=lo+(hi-lo)*k/4;g+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="rgba(27,23,18,.12)"/><text x="'+(m.l-8)+'" y="'+(y(v)+3)+'" text-anchor="end">'+fmt(v)+'</text>'}
+  [0,7,14,21,27].forEach(function(i){if(rows[i])g+='<text x="'+x(i)+'" y="'+(H-8)+'" text-anchor="middle">'+rows[i][0].slice(5)+'</text>'});
+  box.innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="28-day forecast with 80 percent band"><g class="axis">'+g+'</g><polygon points="'+up+' '+dn+'" fill="rgba(238,90,34,.18)"/><polyline points="'+ln+'" fill="none" stroke="#ee5a22" stroke-width="2.5" stroke-linejoin="round" stroke-dasharray="'+(reduce?0:2000)+'" stroke-dashoffset="'+(reduce?0:2000)+'" id="fcLine"/></svg><p style="margin:10px 0 0;font:500 12px var(--sans);color:var(--mute)"><b style="color:var(--sun)">━</b> forecast units/day &nbsp; <span style="display:inline-block;width:12px;height:10px;background:rgba(238,90,34,.25)"></span> 80% band</p>';
+  var L=$("#fcLine");if(L&&!reduce){L.getBoundingClientRect();L.style.transition="stroke-dashoffset 1.4s cubic-bezier(.2,.7,.2,1)";requestAnimationFrame(function(){L.style.strokeDashoffset=0})}
+}
+function drawModels(){
+  var pid=+fsel.value,rows=D.fc[pid],base=rows.filter(function(r){return r.m==="naive_mean"})[0],max=Math.max.apply(null,rows.map(function(r){return r.mae}))*1.1||1;
+  var chosen=rows.filter(function(r){return r.sel})[0];
+  if(!rows.some(function(r){return r.m===fcm}))fcm=chosen.m;
+  $("#models").innerHTML=rows.map(function(r){
+    var badge=r.sel?'<em>Selected</em>':"";
+    return '<button class="model" type="button" data-m="'+r.m+'" aria-pressed="'+(r.m===fcm)+'"><span>'+MN[r.m]+badge+'</span><span class="bar"><i style="width:'+(r.mae/max*100)+'%"></i><span class="tick" style="left:'+(base.mae/max*100)+'%" title="naive baseline"></span></span><b>'+r.mae.toFixed(2)+'</b></button>';
+  }).join("");
+  [].forEach.call(document.querySelectorAll(".model"),function(b){b.addEventListener("click",function(){fcm=b.dataset.m;drawModels()})});
+  var cur=rows.filter(function(r){return r.m===fcm})[0],gain=(base.mae-cur.mae)/base.mae*100;
+  var v;
+  if(cur.m==="naive_mean")v="The naive mean is the baseline every other model has to beat.";
+  else if(gain>5)v=MN[cur.m]+" beats the baseline by <b>"+gain.toFixed(1)+"%</b> — clearly past the 5% bar.";
+  else if(gain>0)v=MN[cur.m]+" is only "+gain.toFixed(1)+"% better than the baseline — <b>under the 5% bar</b>, so the simpler model stays.";
+  else v=MN[cur.m]+" is "+Math.abs(gain).toFixed(1)+"% <b>worse</b> than the baseline on this SKU.";
+  $("#verdict").innerHTML=v+(chosen.m!==cur.m?"":" It is the model in use.");
+  $("#fcStats").innerHTML=[["MAE",cur.mae],["RMSE",cur.rmse],["MASE",cur.mase],["Bias",cur.bias]].map(function(s){return '<div><b>'+(s[1]==null?"—":Number(s[1]).toFixed(2))+'</b><span>'+s[0]+'</span></div>'}).join("");
+  drawPlot(pid);
+}
+fsel.addEventListener("change",function(){fcm="";drawModels()});
+fsel.value=D.future_ids[0];drawModels();
+
+/* ---------- stock table ---------- */
+var FL={STOCKOUT:"Stockout",AT_RISK:"At risk",EXCESS:"Excess",OK:"OK"},ORD={STOCKOUT:0,AT_RISK:1,EXCESS:2,OK:3},fflag="ALL",fq="";
+var cnt={ALL:D.products.length};D.products.forEach(function(p){cnt[p.flag]=(cnt[p.flag]||0)+1});
+$("#flagChips").innerHTML=["ALL","STOCKOUT","AT_RISK","EXCESS","OK"].map(function(f){return '<button class="chip" type="button" data-f="'+f+'" aria-pressed="'+(f==="ALL")+'">'+(f==="ALL"?"All":FL[f])+'<span class="n">'+(cnt[f]||0)+'</span></button>'}).join("")+'<input class="search" type="search" id="q" placeholder="Search SKU, product, supplier…" aria-label="Search stock">';
+function drawStock(){
+  var rows=D.products.filter(function(p){return (fflag==="ALL"||p.flag===fflag)&&(!fq||(p.sku+" "+p.name+" "+p.supplier+" "+p.category).toLowerCase().indexOf(fq)>=0)})
+    .sort(function(a,b){return ORD[a.flag]-ORD[b.flag]||a.cover-b.cover});
+  var col={STOCKOUT:"var(--stockout)",AT_RISK:"var(--at-risk)",EXCESS:"var(--excess)",OK:"var(--ok)"};
+  $("#stockBody").innerHTML=rows.map(function(p){
+    return '<tr><td class="prod"><b>'+esc(p.name)+'</b><span>'+esc(p.sku)+' · class '+p.abc+'</span></td><td>'+esc(p.supplier)+'</td>'+
+      '<td><span class="cov"><i style="width:'+Math.min(100,p.cover/120*100)+'%;background:'+col[p.flag]+'"></i></span><span style="font:500 13px var(--mono)">'+(p.cover>=9999?"∞":fmt(p.cover,0))+' d</span></td>'+
+      '<td class="num">'+fmt(p.pos)+' / '+fmt(p.rop)+'</td><td><span class="flag '+p.flag+'">'+FL[p.flag]+'</span></td><td class="num">'+(p.qty?fmt(p.qty):"—")+'</td><td class="num">'+(p.value?fmt(p.value):"—")+'</td></tr>';
+  }).join("");
+  $("#stockEmpty").hidden=rows.length>0;
+}
+$("#flagChips").addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;fflag=b.dataset.f;[].forEach.call(document.querySelectorAll("#flagChips .chip"),function(c){c.setAttribute("aria-pressed",c===b)});drawStock()});
+$("#q").addEventListener("input",function(e){fq=e.target.value.trim().toLowerCase();drawStock()});
+drawStock();
+
+/* ---------- suppliers ---------- */
+var gsel="ALL";
+var gcnt={ALL:D.suppliers.length};D.suppliers.forEach(function(s){gcnt[s.grade]=(gcnt[s.grade]||0)+1});
+$("#gradeChips").innerHTML=["ALL","A","B","C","D"].filter(function(g){return g==="ALL"||gcnt[g]}).map(function(g){return '<button class="chip" type="button" data-g="'+g+'" aria-pressed="'+(g==="ALL")+'">'+(g==="ALL"?"All grades":"Grade "+g)+'<span class="n">'+gcnt[g]+'</span></button>'}).join("");
+var so=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){[].forEach.call(e.target.querySelectorAll(".meter i"),function(i){i.style.width=i.dataset.w});so.unobserve(e.target)}})},{threshold:.2});
+function drawSup(){
+  var rows=D.suppliers.filter(function(s){return gsel==="ALL"||s.grade===gsel}).sort(function(a,b){return b.score-a.score});
+  var box=$("#supList");
+  box.innerHTML=rows.map(function(s){return '<div class="sup"><div class="grade '+s.grade+'">'+s.grade+'</div><div><h3>'+esc(s.name)+'</h3><p>'+s.orders+' POs · '+s.open+' open · lead '+s.lead.toFixed(1)+' d · CV '+s.cv.toFixed(2)+'</p></div>'+
+    '<div><div class="meter-l"><span>On-time</span><span>'+(s.ot*100).toFixed(1)+'%</span></div><div class="meter"><i data-w="'+(s.ot*100)+'%"></i></div><div class="meter-l" style="margin-top:12px"><span>Fill rate</span><span>'+(s.fill*100).toFixed(1)+'%</span></div><div class="meter"><i data-w="'+(s.fill*100)+'%"></i></div></div>'+
+    '<div class="score">'+s.score.toFixed(1)+'<small>Score / 100</small></div></div>'}).join("")||'<div class="empty">No suppliers in this grade.</div>';
+  so.observe(box);
+}
+$("#gradeChips").addEventListener("click",function(e){var b=e.target.closest(".chip");if(!b)return;gsel=b.dataset.g;[].forEach.call(document.querySelectorAll("#gradeChips .chip"),function(c){c.setAttribute("aria-pressed",c===b)});drawSup()});
+drawSup();
+(function(){ // monthly on-time sparkline-bars
+  var t=D.trend,W=900,H=210,m={l:40,r:8,t:10,b:28},bw=(W-m.l-m.r)/t.length,s="";
+  [0,.5,1].forEach(function(v){var y=m.t+(H-m.t-m.b)*(1-v);s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+y+'" y2="'+y+'" stroke="rgba(27,23,18,.14)"/><text x="'+(m.l-8)+'" y="'+(y+3)+'" text-anchor="end">'+(v*100)+'%</text>'});
+  t.forEach(function(r,i){var h=(H-m.t-m.b)*r.ot,x=m.l+i*bw+bw*.16;
+    s+='<rect x="'+x+'" y="'+(H-m.b-h)+'" width="'+bw*.68+'" height="'+h+'" fill="'+(r.ot<.7?"#c4301a":"#1b1712")+'"><title>'+r.month+': '+(r.ot*100).toFixed(0)+'% on time, '+r.orders+' orders</title></rect><text x="'+(x+bw*.34)+'" y="'+(H-10)+'" text-anchor="middle">'+r.month.slice(2)+'</text>'});
+  $("#trend").innerHTML='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Monthly on-time delivery rate"><g class="axis">'+s+'</g></svg>';
+})();
+
+/* ---------- story ---------- */
+var order=D.chart_order,list=$("#storyList");
+list.innerHTML=order.map(function(k,i){return '<li><button type="button" data-i="'+i+'"><span>'+String(i+1).padStart(2,"0")+'</span>'+esc(CH[k].title)+'</button></li>'}).join("");
+function showChart(i){
+  var k=order[i],c=CH[k];$("#storyImg").style.opacity=.15;
+  [].forEach.call(list.querySelectorAll("button"),function(b,j){b.setAttribute("aria-current",j===i)});
+  setTimeout(function(){$("#storyImg").src=c.src;$("#storyImg").alt=c.title;$("#storyImg").style.opacity=1},reduce?0:140);
+  $("#storyCap").innerHTML='<b>Interpretation</b>'+esc(c.text);
+}
+list.addEventListener("click",function(e){var b=e.target.closest("button");if(b)showChart(+b.dataset.i)});
+list.addEventListener("mouseover",function(e){var b=e.target.closest("button");if(b&&matchMedia("(hover:hover)").matches&&b.getAttribute("aria-current")!=="true")showChart(+b.dataset.i)});
+showChart(0);
+
+/* ---------- API ---------- */
+var tabs=$("#apiTabs");
+tabs.innerHTML=D.api.map(function(a,i){return '<button class="chip" type="button" role="tab" data-i="'+i+'" aria-pressed="'+(i===0)+'">'+a.method+' '+esc(a.path.split("?")[0].replace("/api/",""))+'</button>'}).join("");
+function showApi(i){var a=D.api[i];$("#apiV").textContent=a.method;$("#apiP").textContent=a.path;var s=$("#apiS");s.textContent=a.status;s.className="st "+(a.status<400?"ok":"bad");$("#apiD").textContent=a.label;$("#apiB").textContent=a.body;
+  [].forEach.call(tabs.children,function(b,j){b.setAttribute("aria-pressed",j===i)})}
+tabs.addEventListener("click",function(e){var b=e.target.closest(".chip");if(b)showApi(+b.dataset.i)});
+showApi(0);
+
+watch();
+})();
+</script>
+</body>
+</html>

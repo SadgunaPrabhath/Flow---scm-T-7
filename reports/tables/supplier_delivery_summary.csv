@@ -1,0 +1,7 @@
+supplier_id,supplier_name,orders_total,orders_delivered,open_orders,late_orders,units_ordered,units_received,open_units,avg_lead_time_days,std_lead_time_days,lead_time_cv,p90_lead_time_days,avg_delay_days,max_delay_days,on_time_rate,fill_rate,supplier_score,expected_lead_time_days,lead_time_gap_days,grade
+1,Precision Auto Components Pvt Ltd,27,26,1,0,9750.0,9555.0,195.0,7.808,0.939,0.12,9.0,-2.192,0.0,1.0,1.0,95.19,10,-2.192,A
+3,Bharat Industrial Fasteners,68,68,0,1,62305.0,62305.0,0.0,5.691,0.966,0.17,7.0,-1.309,1.0,0.985,1.0,92.329,7,-1.309,B
+6,NorthStar Electronics,33,28,6,4,2331.0,1935.0,396.0,24.893,1.37,0.055,26.0,-0.107,6.0,0.857,0.989,89.227,25,-0.107,B
+2,Shenzhen MotionWorks Ltd,55,45,10,20,7029.0,5730.0,1150.0,21.622,2.146,0.099,24.0,0.622,6.0,0.556,0.99,69.364,21,0.622,D
+4,EuroDrive Systems GmbH,32,19,12,13,3607.0,2607.0,984.0,31.105,2.787,0.09,34.2,1.105,6.0,0.316,1.0,55.364,30,1.105,D
+5,Krishna Plastics & Packaging,49,42,6,24,142330.0,138420.0,3820.0,14.071,4.682,0.333,21.8,2.071,13.0,0.429,1.0,52.405,12,2.071,D

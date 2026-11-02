@@ -1,0 +1,22 @@
+# ---------------------------------------------------------------------------
+# Project 24 - Supply Chain Optimization and Inventory Forecasting System
+# Python 3.10+  (developed and tested on Python 3.13)
+# Install with:  pip install -r requirements.txt
+# ---------------------------------------------------------------------------
+
+# --- core stack -------------------------------------------------------------
+Flask==3.1.3                # REST APIs, routing, request/response handling
+python-dotenv==1.1.1        # credentials and parameters from .env
+mysql-connector-python==9.4.0   # MySQL driver with a built-in connection pool
+pandas==2.2.3               # cleaning, grouping, joining, reporting
+numpy==2.3.5                # numerical calculations and descriptive statistics
+matplotlib==3.10.9          # charts saved as PNG
+
+# --- optional forecasting library (Holt-Winters) ----------------------------
+statsmodels==0.14.5
+
+# --- reporting helper -------------------------------------------------------
+openpyxl==3.1.5             # multi-sheet Excel workbook of analysis tables
+
+# --- testing ----------------------------------------------------------------
+pytest==9.0.3

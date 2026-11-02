@@ -1,0 +1,75 @@
+{
+  "generated": "2026-10-21",
+  "as_of": "2026-10-19",
+  "parameters": {
+    "window_days": 90,
+    "service_level": 0.95,
+    "safety_stock_days": 7.0,
+    "safety_stock_policy": "max",
+    "review_period_days": 7.0,
+    "excess_cover_days": 90.0,
+    "forecast_horizon_days": 28
+  },
+  "portfolio": {
+    "products": 24,
+    "stockout": 2,
+    "at_risk": 1,
+    "excess": 4,
+    "ok": 17,
+    "inventory_value": 7151593.0,
+    "suggested_order_value": 477900.0,
+    "avg_days_of_cover": 44.22,
+    "products_below_master_rop": 3,
+    "abc_counts": {
+      "A": 12,
+      "B": 6,
+      "C": 6
+    },
+    "parameters": {
+      "window_days": 90,
+      "service_level": 0.95,
+      "safety_stock_days": 7.0,
+      "safety_stock_policy": "max",
+      "review_period_days": 7.0,
+      "excess_cover_days": 90.0,
+      "forecast_horizon_days": 28
+    }
+  },
+  "forecast": {
+    "products_evaluated": 24,
+    "holdout_days": 28,
+    "improved_over_baseline": 13,
+    "models_selected": {
+      "naive_mean": 11,
+      "holt_winters": 11,
+      "moving_average": 2
+    },
+    "mean_mae_baseline": 7.9,
+    "mean_mae_selected": 6.059,
+    "mean_improvement_pct": 10.5
+  },
+  "run_id": 10,
+  "charts": [
+    "01_demand_trend.png",
+    "02_weekday_demand_heatmap.png",
+    "03_inventory_vs_rop.png",
+    "04_supplier_on_time.png",
+    "05_supplier_delay_spread.png",
+    "06_abc_pareto.png",
+    "07_forecast_vs_actual.png",
+    "08_forecast_horizon.png",
+    "09_risk_flags_summary.png",
+    "10_stock_turnover.png"
+  ],
+  "tables": [
+    "reorder_recommendations.csv",
+    "supplier_delivery_summary.csv",
+    "demand_statistics.csv",
+    "inventory_turnover.csv",
+    "forecast_comparison.csv",
+    "forecast_summary.csv",
+    "future_forecast_lines.csv",
+    "delivery_trend_monthly.csv",
+    "category_demand.csv"
+  ]
+}
